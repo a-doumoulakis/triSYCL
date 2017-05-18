@@ -36,6 +36,9 @@ struct error_handler {
   */
   virtual void report_error(exception &error) = 0;
 
+  // Wnon-virtual-dtor warning with clang
+  virtual ~error_handler() = 0;
+
   /** Add a default_handler to be used by default
 
       \todo add this concept to the specification?
