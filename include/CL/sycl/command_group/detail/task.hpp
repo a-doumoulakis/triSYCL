@@ -20,6 +20,7 @@
 #include "CL/sycl/buffer/detail/buffer_base.hpp"
 #include "CL/sycl/detail/debug.hpp"
 #include "CL/sycl/kernel.hpp"
+#include "CL/sycl/parallelism/detail/task_dispatcher.hpp"
 #include "CL/sycl/queue/detail/queue.hpp"
 
 namespace cl {
@@ -65,10 +66,12 @@ struct task : public std::enable_shared_from_this<task>,
 
   std::shared_ptr<cl::sycl::detail::kernel> kernel;
 
+  std::shared_ptr<cl::sycl::detail::task_dispatcher> task_dispatcher;
 
   /// Create a task from a submitting queue
   task(const std::shared_ptr<detail::queue> &q)
-    : owner_queue { q } {}
+    : owner_queue { q },
+      task_dispatcher { cl::sycl::detail::task_dispatcher::instance() } {}
 
 
   /// Add a new task to the task graph and schedule for execution
@@ -106,13 +109,14 @@ struct task : public std::enable_shared_from_this<task>,
 #ifndef TRISYCL_NO_ASYNC
     /* If in asynchronous execution mode, execute the functor in a new
        thread */
-    std::thread thread(execution);
+    //std::thread thread(execution);
+    task_dispatcher->dispatch(execution);
     TRISYCL_DUMP_T("Task thread started");
     /** Detach the thread since it will synchronize by its own means
 
         \todo This is an issue if there is an exception in the kernel
     */
-    thread.detach();
+    //thread.detach();
 #else
     // Just a synchronous execution otherwise
     execution();
