@@ -34,7 +34,7 @@ class buffer_waiter :
     public detail::shared_ptr_implementation<buffer_waiter<T,
                                                            Dimensions,
                                                            Allocator>,
-                                             detail::buffer<T, Dimensions>>,
+                                             detail::buffer<T, Dimensions, Allocator>>,
     detail::debug<buffer_waiter<T, Dimensions, Allocator>> {
 
   // The type encapsulating the implementation
@@ -49,7 +49,7 @@ public:
   using implementation_t::implementation;
 
   /// Create a new buffer_waiter on top of a detail::buffer
-  buffer_waiter(detail::buffer<T, Dimensions> *b) : implementation_t { b } {}
+  buffer_waiter(detail::buffer<T, Dimensions, Allocator> *b) : implementation_t { b } {}
 
 
   /** The buffer_waiter destructor waits for any data to be written
@@ -76,7 +76,7 @@ public:
 template <typename T,
           int Dimensions = 1,
           typename Allocator = buffer_allocator<std::remove_const_t<T>>>
-inline auto waiter(detail::buffer<T, Dimensions> *b) {
+inline auto waiter(detail::buffer<T, Dimensions, Allocator> *b) {
   return new buffer_waiter<T, Dimensions, Allocator> { b };
 }
 

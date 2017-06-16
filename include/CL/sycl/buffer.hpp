@@ -112,7 +112,7 @@ public:
   */
   buffer(const range<Dimensions> &r, Allocator allocator = {})
     : implementation_t { detail::waiter<T, Dimensions, Allocator>(
-                         new detail::buffer<T, Dimensions> { r }) }
+                         new detail::buffer<T, Dimensions, Allocator> { r }) }
       {}
 
 

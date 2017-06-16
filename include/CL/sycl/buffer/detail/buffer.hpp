@@ -40,9 +40,10 @@ namespace detail {
     any storage.
 */
 template <typename T,
-          int Dimensions = 1>
+          int Dimensions = 1,
+          typename Allocator>
 class buffer : public detail::buffer_base,
-               public detail::debug<buffer<T, Dimensions>> {
+               public detail::debug<buffer<T, Dimensions, Allocator>> {
 public:
 
   // Extension to SYCL: provide pieces of STL container interface
@@ -66,7 +67,8 @@ private:
 
       \todo Implement user-provided allocator
   */
-  std::allocator<non_const_value_type> alloc;
+  //std::allocator<non_const_value_type> alloc;
+  Allocator alloc;
 
   /** This is the multi-dimensional interface to the data that may point
       to either allocation in the case of storage managed by SYCL itself

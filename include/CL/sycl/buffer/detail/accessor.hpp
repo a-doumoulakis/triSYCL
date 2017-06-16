@@ -15,6 +15,7 @@
 #include <boost/multi_array.hpp>
 
 #include "CL/sycl/access.hpp"
+#include "CL/sycl/buffer_allocator.hpp"
 #include "CL/sycl/command_group/detail/task.hpp"
 #include "CL/sycl/detail/debug.hpp"
 #include "CL/sycl/id.hpp"
@@ -29,7 +30,9 @@ class handler;
 namespace detail {
 
 // Forward declaration of detail::buffer for use in accessor
-template <typename T, int Dimensions> class buffer;
+template <typename T,
+          int Dimensions,
+          typename Allocator = buffer_allocator<std::remove_const_t<T>>> class buffer;
 
 /** \addtogroup data Data access and storage in SYCL
     @{
@@ -67,7 +70,10 @@ class accessor :
       has to be destroyed to release the buffer and potentially
       unblock a kernel at the end of its execution
   */
-  std::shared_ptr<detail::buffer<T, Dimensions>> buf;
+  std::shared_ptr<void> buf;
+
+  std::function<void(std::shared_ptr<void>)> f =
+    [this](auto a) { this->buf = std::move(a); };
 
   /// The implementation is a multi_array_ref wrapper
   using array_view_type = boost::multi_array_ref<T, Dimensions>;
@@ -119,15 +125,19 @@ public:
       \todo fix the specification to rename target that shadows
       template parm
   */
-  accessor(std::shared_ptr<detail::buffer<T, Dimensions>> target_buffer) :
-    buf { target_buffer }, array { target_buffer->access } {
+  template<typename Allocator>
+  accessor(std::shared_ptr<detail::buffer<T, Dimensions, Allocator>> target_buffer) :
+    array { target_buffer -> access } {
+    f(target_buffer);
     target_buffer->template track_access_mode<Mode>();
     TRISYCL_DUMP_T("Create a host accessor write = " << is_write_access());
     static_assert(Target == access::target::host_buffer,
                   "without a handler, access target should be host_buffer");
     /* The host needs to wait for all the producers of the buffer to
        have finished */
-    buf->wait();
+    auto cbuf =
+      std::static_pointer_cast<detail::buffer<T, Dimensions, Allocator>, void>(buf);
+    cbuf->wait();
 
 #ifdef TRISYCL_OPENCL
     /* For the host context, we are obligated to update the buffer state
@@ -136,7 +146,7 @@ public:
        host accessors are blocking
      */
     cl::sycl::context ctx;
-    buf->update_buffer_state(ctx, Mode, get_size(), array.data());
+    cbuf->update_buffer_state(ctx, Mode, get_size(), array.data());
 #endif
   }
 
@@ -146,9 +156,11 @@ public:
       \todo fix the specification to rename target that shadows
       template parm
   */
-  accessor(std::shared_ptr<detail::buffer<T, Dimensions>> target_buffer,
+  template<typename Allocator>
+  accessor(std::shared_ptr<detail::buffer<T, Dimensions, Allocator>> target_buffer,
            handler &command_group_handler) :
-    buf { target_buffer }, array { target_buffer->access } {
+    array { target_buffer->access } {
+    f(target_buffer);
     target_buffer->template track_access_mode<Mode>();
     TRISYCL_DUMP_T("Create a kernel accessor write = " << is_write_access());
     static_assert(Target == access::target::global_buffer
@@ -156,7 +168,9 @@ public:
                   "access target should be global_buffer or constant_buffer "
                   "when a handler is used");
     // Register the buffer to the task dependencies
-    task = buffer_add_to_task(buf, &command_group_handler, is_write_access());
+    auto cbuf =
+      std::static_pointer_cast<detail::buffer<T, Dimensions, Allocator>, void>(buf);
+    task = buffer_add_to_task(cbuf, &command_group_handler, is_write_access());
   }
 
 
@@ -453,7 +467,9 @@ private:
   auto get_cl_buffer() const {
     // This throws if not set
     auto ctx = task->get_queue()->get_context();
-    return buf->get_cl_buffer(ctx);
+    auto cbuf =
+      std::static_pointer_cast<detail::buffer<T, Dimensions>, void>(buf);
+    return cbuf->get_cl_buffer(ctx);
   }
 
 
@@ -465,7 +481,9 @@ private:
        the buffer doesn't already exists or if the data is not up to date
     */
     auto ctx = task->get_queue()->get_context();
-    buf->update_buffer_state(ctx, Mode, get_size(), array.data());
+    auto cbuf =
+      std::static_pointer_cast<detail::buffer<T, Dimensions>, void>(buf);
+    cbuf->update_buffer_state(ctx, Mode, get_size(), array.data());
   }
 
 
