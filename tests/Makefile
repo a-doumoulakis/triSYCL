@@ -83,7 +83,9 @@ CLEANING_TARGETS = $(TARGETS) $(FILES_C:%.C=%.o)
 
 # The implementation uses C++14
 CXXFLAGS += -Wall -std=c++1y -I$(triSYCL_DIR)/include \
-	-I$(triSYCL_DIR)/tests/common
+	-I$(triSYCL_DIR)/tests/common \
+  -DKNN_TRAIN_DATA_PATH="\"${triSYCL_DIR}/tests/K-nn/data/trainingsample.csv\"" \
+  -DKNN_VALID_DATA_PATH="\"${triSYCL_DIR}/tests/K-nn/data/validationsample.csv\""
 
 # Specify where OpenCL includes files are with OpenCL_INCPATH
 ifdef OpenCL_INCPATH

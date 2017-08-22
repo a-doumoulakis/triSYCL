@@ -1,6 +1,9 @@
 /* RUN: %{execute}%s
 
-   Digit recognition in images using nearest neighbour matching
+   Digit recognition in images using nearest neighbour matching.
+   A full description as well as an OpenCL implementation and a
+   ComputeCPP compatible version can be found at
+   https://github.com/a-doumoulakis/triSYCL_knn/
 */
 
 #include "util.hpp"

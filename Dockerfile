@@ -35,8 +35,9 @@ RUN if [ "${opencl}" = 'ON' ]; then apt-get install -y --allow-downgrades      \
 
 RUN git clone https://github.com/${git_slug}.git -b ${git_branch} /trisycl
 
-RUN cd /trisycl; cmake . -DTRISYCL_OPENCL=${opencl}                            \
-    -DTRISYCL_OPENMP=${openmp} -DCMAKE_C_COMPILER=${c_compiler}                \
-    -DCMAKE_CXX_COMPILER=${cxx_compiler} && make -j 4
+RUN  mkdir /trisycl/build; cd /trisycl/build; cmake ..                         \
+     -DTRISYCL_OPENCL=${opencl} -DTRISYCL_OPENMP=${openmp}                     \
+     -DCMAKE_C_COMPILER=${c_compiler} -DCMAKE_CXX_COMPILER=${cxx_compiler}     \
+     && make -j 4
 
-CMD cd /trisycl && make -j 2 && ctest
+CMD cd /trisycl/build && make -j 2 && ctest

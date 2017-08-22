@@ -11,8 +11,12 @@
 #include <CL/sycl.hpp>
 
 // We assume we are in build/tests/K-nn
+#ifndef KNN_TRAIN_DATA_PATH
 #define KNN_TRAIN_DATA_PATH "../../../tests/K-nn/data/trainingsample.csv"
+#endif
+#ifndef KNN_VALID_DATA_PATH
 #define KNN_VALID_DATA_PATH "../../../tests/K-nn/data/validationsample.csv"
+#endif
 
 using namespace cl::sycl;
 
