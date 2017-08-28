@@ -49,7 +49,10 @@ public:
 
   /// Return the underlying \c cl_context of the \c cl::sycl::context
   cl_context get() const override {
-    return c.get();
+    /// \todo error handling
+    cl_context cl_c = c.get();
+    clRetainContext(cl_c);
+    return cl_c;
   }
 
 

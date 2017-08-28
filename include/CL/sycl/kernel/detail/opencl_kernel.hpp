@@ -57,8 +57,9 @@ class opencl_kernel : public detail::kernel,
   */
   cl_kernel get() const override {
     /// \todo Test error and throw. Externalize this feature in Boost.Compute?
-    clRetainKernel(k);
-    return k.get();
+    cl_kernel cl_k = k.get();
+    clRetainKernel(cl_k);
+    return cl_k;
   }
 
 
